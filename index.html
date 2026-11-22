@@ -1,0 +1,249 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VFX Portfolio</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 35px;
+      background: #101010;
+      color: #fff;
+      font-family: Arial, sans-serif;
+    }
+
+    header {
+      text-align: center;
+      padding: 25px 0 40px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 400;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+    }
+
+    header p {
+      margin-top: 12px;
+      color: #777;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    #gallery {
+      columns: 4 250px;
+      column-gap: 14px;
+      max-width: 1800px;
+      margin: 0 auto;
+    }
+
+    .gallery-item {
+      display: block;
+      width: 100%;
+      margin-bottom: 14px;
+      break-inside: avoid;
+      overflow: hidden;
+      background: #1b1b1b;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+
+    .gallery-item img {
+      display: block;
+      width: 100%;
+      height: auto;
+      transition: transform 0.35s ease, opacity 0.35s ease;
+    }
+
+    .gallery-item:hover img {
+      transform: scale(1.025);
+      opacity: 0.85;
+    }
+
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.96);
+      justify-content: center;
+      align-items: center;
+      padding: 35px;
+      cursor: zoom-out;
+    }
+
+    #lightbox.active {
+      display: flex;
+    }
+
+    #lightbox img {
+      max-width: 95%;
+      max-height: 90vh;
+      object-fit: contain;
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+    }
+
+    #close {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      color: white;
+      font-size: 36px;
+      font-weight: 200;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+
+    #status {
+      text-align: center;
+      color: #777;
+      padding: 40px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 15px;
+      }
+
+      #gallery {
+        columns: 2 140px;
+        column-gap: 8px;
+      }
+
+      .gallery-item {
+        margin-bottom: 8px;
+      }
+
+      header h1 {
+        font-size: 20px;
+      }
+
+      #lightbox {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>VFX Portfolio</h1>
+    <p>Compositing · Paint · Roto</p>
+  </header>
+
+  <main>
+    <div id="gallery"></div>
+    <div id="status">Loading portfolio...</div>
+  </main>
+
+  <div id="lightbox">
+    <button id="close" aria-label="Close">&times;</button>
+    <img id="lightbox-image" src="" alt="Enlarged VFX artwork">
+  </div>
+
+  <script>
+    // YOUR GITHUB DETAILS
+    const username = "yuliasegura";
+    const repository = "vfx-portfolio";
+
+    // GIFs are directly in the main repository.
+    const apiURL =
+      `https://api.github.com/repos/${username}/${repository}/contents/`;
+
+    const gallery = document.getElementById("gallery");
+    const status = document.getElementById("status");
+    const lightbox = document.getElementById("lightbox");
+    const lightboxImage = document.getElementById("lightbox-image");
+    const closeButton = document.getElementById("close");
+
+    async function loadGallery() {
+      try {
+        const response = await fetch(apiURL);
+
+        if (!response.ok) {
+          throw new Error("Could not access the GitHub repository.");
+        }
+
+        const files = await response.json();
+
+        const gifs = files.filter(file =>
+          file.type === "file" &&
+          file.name.toLowerCase().endsWith(".gif")
+        );
+
+        if (gifs.length === 0) {
+          status.textContent = "No GIFs found. Check your repository.";
+          return;
+        }
+
+        gifs.sort((a, b) =>
+          a.name.localeCompare(b.name, undefined, {
+            numeric: true,
+            sensitivity: "base"
+          })
+        );
+
+        gifs.forEach(file => {
+          const item = document.createElement("div");
+          item.className = "gallery-item";
+
+          const img = document.createElement("img");
+          img.src = file.download_url;
+          img.alt = "VFX portfolio work";
+          img.loading = "lazy";
+
+          item.appendChild(img);
+          gallery.appendChild(item);
+
+          item.addEventListener("click", () => {
+            lightboxImage.src = file.download_url;
+            lightbox.classList.add("active");
+          });
+        });
+
+        status.textContent = "";
+
+      } catch (error) {
+        status.textContent =
+          "Unable to load GIFs. Please check your GitHub username and repository settings.";
+        console.error(error);
+      }
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove("active");
+      lightboxImage.src = "";
+    }
+
+    closeButton.addEventListener("click", closeLightbox);
+
+    lightbox.addEventListener("click", event => {
+      if (event.target === lightbox) {
+        closeLightbox();
+      }
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") {
+        closeLightbox();
+      }
+    });
+
+    loadGallery();
+  </script>
+
+</body>
+</html>
